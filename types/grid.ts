@@ -1,0 +1,21 @@
+export type GridEmissionResult = {
+  country: string;
+  countryCode: string;
+  region?: string;
+  regionCode?: string;
+  city?: string;
+  latitude: number;
+  longitude: number;
+  gridFactorKgCO2ePerKwh: number;
+  gridFactorGCO2ePerKwh: number;
+  renewableSharePercent?: number;
+  year?: number;
+  geographyLevel: 'grid_region' | 'country' | 'coordinates' | 'fallback';
+  emissionsBoundary: 'direct' | 'lifecycle' | 'unknown';
+  source: 'EPA' | 'ElectricityMaps' | 'Fallback';
+  sourceDetail: string;
+  sourceUrl?: string;
+  confidence: 'high' | 'medium' | 'low' | 'fallback';
+  notes?: string;
+  warnings?: string[];
+};
