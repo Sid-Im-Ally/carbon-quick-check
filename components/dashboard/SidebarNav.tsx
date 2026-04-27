@@ -20,8 +20,8 @@ type Props = { activeTab: NavTab; onTabChange: (t: NavTab) => void };
 export default function SidebarNav({ activeTab, onTabChange }: Props) {
   return (
     <div style={{ background: '#1e3128', color: '#cfd8d2', display: 'flex', flexDirection: 'column', padding: '20px 0', width: 76, flexShrink: 0 }}>
-      <div style={{ width: 28, height: 28, borderRadius: 6, background: '#5a7a5a', margin: '0 auto 28px', display: 'grid', placeItems: 'center', color: '#fff', fontWeight: 700, fontSize: 13, letterSpacing: 0.5 }}>
-        CQ
+      <div style={{ width: 36, height: 36, margin: '0 auto 28px', display: 'grid', placeItems: 'center' }}>
+        <img src="/logoicon.png" alt="Carbon Quick Check" style={{ width: 36, height: 36, objectFit: 'contain' }} />
       </div>
 
       <div style={{ flex: 1 }}>

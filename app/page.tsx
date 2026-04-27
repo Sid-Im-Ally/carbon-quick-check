@@ -262,10 +262,8 @@ export default function DashboardPage() {
                 disabled={loading}
                 style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 0', borderRadius: 8, background: loading ? '#8aab8a' : '#5a7a5a', color: '#fff', fontSize: 13, fontWeight: 700, letterSpacing: 0.5, border: 'none', cursor: loading ? 'default' : 'pointer', transition: 'background .15s', fontFamily: 'inherit' }}
               >
-                {loading ? (
+                {loading && (
                   <div style={{ width: 14, height: 14, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                ) : (
-                  <Icon name="gauge" size={17} stroke={2} />
                 )}
                 {loading ? 'Calculating…' : 'Run Quick Check'}
               </button>
