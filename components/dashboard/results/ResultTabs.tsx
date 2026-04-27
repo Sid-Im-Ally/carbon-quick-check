@@ -141,7 +141,7 @@ export default function ChartArea({ result }: Props) {
               { label: 'Climate Zone', value: `${result.climate.climateZone} — ${result.climate.climateLabel}` },
               { label: 'Mobility Profile', value: result.assignedMobilityProfile.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) },
               { label: 'Mobility Score', value: result.mobilityScoring.finalScore.toFixed(1) },
-              { label: 'Infra Allowance', value: `${Math.round((result.infrastructureEmissionsTCO2e / (result.buildingEmissionsTCO2e + result.mobilityEmissionsTCO2e)) * 100)}% of bldg + mob` },
+              { label: 'Infra Allowance', value: `${Math.round(result.contributionPercentages.infrastructure)}% of total` },
               { label: 'Data Source', value: result.grid.source },
             ].map(({ label, value }) => (
               <div key={label} style={{ padding: '8px 0', borderBottom: '1px solid rgba(31,38,34,0.06)' }}>

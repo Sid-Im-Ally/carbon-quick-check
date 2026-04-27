@@ -21,6 +21,8 @@ import MetricCard from '@/components/dashboard/results/MetricCard';
 import ChartArea from '@/components/dashboard/results/ResultTabs';
 import SignalsPanel from '@/components/dashboard/results/DesignSignalsPanel';
 import AssumptionStrip from '@/components/dashboard/results/AssumptionSummaryStrip';
+import AssumptionsPage from '@/components/dashboard/AssumptionsPage';
+import ScenariosPage, { type SavedScenario } from '@/components/dashboard/ScenariosPage';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -140,6 +142,8 @@ export default function DashboardPage() {
   const [calcError, setCalcError] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [shareMessage, setShareMessage] = useState('');
+  const [scenarios, setScenarios] = useState<SavedScenario[]>([]);
+  const [flashKey, setFlashKey] = useState(0);
 
   const toggleSection = (key: AccordionKey) => {
     setOpenSections(prev => {
@@ -175,6 +179,9 @@ export default function DashboardPage() {
     if (!formData.geographicContext) errors.geographicContext = 'Required';
     if (!formData.projectType)       errors.projectType       = 'Required';
 
+    const totalProgram = Object.values(formData.programAreas ?? {}).reduce((s, v) => s + (v || 0), 0);
+    if (totalProgram <= 0) errors.programAreas = 'Assign at least one program area.';
+
     const mq = formData.mobilityQuestionnaire;
     if (!mq || mq.parkingProvisionScore == null || mq.transitAccessScore == null || mq.mobilityCultureScore == null || mq.catchmentTypeScore == null || mq.expectedArrivalModeScore == null) {
       errors.mobilityQuestionnaire = 'Answer all 5 mobility questions.';
@@ -185,6 +192,7 @@ export default function DashboardPage() {
       if (errors.locationInput || errors.totalPopulation || errors.totalBuiltAreaM2 || errors.siteAreaValue || errors.geographicContext || errors.projectType) {
         setOpenSections(prev => new Set([...prev, 'project']));
       }
+      if (errors.programAreas) setOpenSections(prev => new Set([...prev, 'building']));
       if (errors.mobilityQuestionnaire) setOpenSections(prev => new Set([...prev, 'mobility']));
       return;
     }
@@ -215,6 +223,22 @@ export default function DashboardPage() {
     setTimeout(() => setShareMessage(''), 2500);
   }, []);
 
+  const handleSaveScenario = useCallback(() => {
+    if (!result || scenarios.length >= 3) return;
+    const scenario: SavedScenario = {
+      id: `scenario-${Date.now()}`,
+      savedAt: new Date(),
+      result,
+    };
+    setScenarios(prev => [...prev, scenario]);
+    setFlashKey(k => k + 1);
+    setActiveNavTab('scenarios');
+  }, [result, scenarios.length]);
+
+  const handleDeleteScenario = useCallback((id: string) => {
+    setScenarios(prev => prev.filter(s => s.id !== id));
+  }, []);
+
   // Accordion completeness
   const projectComplete  = !!(resolvedLocation && formData.totalPopulation && formData.totalBuiltAreaM2 && formData.siteAreaValue && formData.geographicContext && formData.projectType);
   const buildingComplete = Object.values(formData.programAreas ?? {}).some(v => v > 0);
@@ -226,14 +250,36 @@ export default function DashboardPage() {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '76px 1fr', height: '100vh', overflow: 'hidden' }}>
       {/* Sidebar */}
-      <SidebarNav activeTab={activeNavTab} onTabChange={setActiveNavTab} />
+      <SidebarNav
+        activeTab={activeNavTab}
+        onTabChange={setActiveNavTab}
+        flashTab={flashKey > 0 ? 'scenarios' : null}
+        flashMessage={`Scenario ${scenarios.length} saved`}
+      />
 
       {/* Main */}
       <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr', overflow: 'hidden' }}>
-        <OverviewHeader onShare={handleShare} onReset={handleReset} shareMessage={shareMessage} />
+        <OverviewHeader
+          onShare={handleShare}
+          onReset={handleReset}
+          onSaveScenario={handleSaveScenario}
+          shareMessage={shareMessage}
+          canSave={!!result}
+          scenarioCount={scenarios.length}
+        />
 
-        {/* Body: scrollable 2-col grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: 16, padding: '16px 28px 0', overflow: 'auto' }}>
+        {/* Full-area page overrides */}
+        {activeNavTab === 'assumptions' && <AssumptionsPage />}
+        {activeNavTab === 'scenarios' && (
+          <ScenariosPage
+            scenarios={scenarios}
+            onDelete={handleDeleteScenario}
+            onGoToOverview={() => setActiveNavTab('overview')}
+          />
+        )}
+
+        {/* Body: scrollable 2-col grid — only shown on overview tab */}
+        <div style={{ display: activeNavTab === 'overview' ? 'grid' : 'none', gridTemplateColumns: '320px 1fr', gap: 16, padding: '16px 28px 0', overflow: 'auto' }}>
           {/* ── Left: Accordion input panels ───────────────────────────── */}
           <div style={{ paddingBottom: 24 }}>
             {PANELS.map(({ key: pKey, ...panel }) => (

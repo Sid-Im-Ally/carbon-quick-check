@@ -31,7 +31,7 @@ export default function AssumptionStrip({ result }: Props) {
     {
       icon: 'infra', iconColor: '#6b7670',
       label: 'Infrastructure Factor',
-      value: `${Math.round((result.infrastructureEmissionsTCO2e / (result.buildingEmissionsTCO2e + result.mobilityEmissionsTCO2e)) * 100)}% of Buildings + Mobility`,
+      value: `${Math.round(result.contributionPercentages.infrastructure)}% of total`,
     },
   ];
 
