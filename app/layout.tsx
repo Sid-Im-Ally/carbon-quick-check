@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import Header from '@/components/Header';
 
 export const metadata: Metadata = {
   title: 'Carbon Quick Check',
@@ -10,9 +9,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-gray-50 text-gray-900">
-        <Header />
-        <main className="flex-1 flex flex-col">{children}</main>
+      <body className="h-full overflow-hidden" style={{ background: '#f6f3ec', color: '#1f2622', fontFamily: "'Inter', system-ui, sans-serif", fontSize: 13, lineHeight: 1.5 }}>
+        {children}
       </body>
     </html>
   );

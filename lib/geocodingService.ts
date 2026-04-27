@@ -31,11 +31,19 @@ async function geocodeWithMapbox(input: string): Promise<ResolvedLocation | null
     const placeCtx = getContext('place');
     const postcodeCtx = getContext('postcode');
 
+    // When the result itself is a country (e.g. Singapore), context is null
+    // and the country code lives in feature.properties.short_code
+    const isCountryFeature = feature.place_type?.includes('country');
+    const countryName = isCountryFeature ? feature.text : (countryCtx?.text ?? '');
+    const countryCode = isCountryFeature
+      ? (feature.properties?.short_code?.toUpperCase() ?? '')
+      : (countryCtx?.short_code?.toUpperCase() ?? '');
+
     return {
       input,
-      city: placeCtx?.text ?? feature.text,
-      country: countryCtx?.text ?? '',
-      countryCode: countryCtx?.short_code?.toUpperCase() ?? '',
+      city: isCountryFeature ? feature.text : (placeCtx?.text ?? feature.text),
+      country: countryName,
+      countryCode,
       region: regionCtx?.text,
       regionCode: regionCtx?.short_code?.replace(/[a-z]{2}-/i, '').toUpperCase(),
       postalCode: postcodeCtx?.text,

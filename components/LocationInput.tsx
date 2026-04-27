@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { ResolvedLocation } from '@/types/location';
 import type { KoppenClimateResult } from '@/types/climate';
 import type { GridEmissionResult } from '@/types/grid';
-import { DataQualityBadge } from './DataQualityBadge';
 
 type ResolvedData = {
   location: ResolvedLocation;
@@ -18,20 +17,17 @@ type Props = {
 };
 
 export function LocationInput({ onResolved, error }: Props) {
-  const [city, setCity] = useState('');
-  const [zipcode, setZipcode] = useState('');
+  const [city, setCity]       = useState('');
   const [country, setCountry] = useState('');
   const [loading, setLoading] = useState(false);
   const [resolveError, setResolveError] = useState('');
   const [resolved, setResolved] = useState<ResolvedData | null>(null);
 
-  function buildQuery() {
-    return [city.trim(), zipcode.trim(), country.trim()].filter(Boolean).join(', ');
-  }
+  const canResolve = city.trim().length > 0 && country.trim().length > 0;
 
-  async function handleResolve() {
-    const query = buildQuery();
-    if (!query) return;
+  const resolve = useCallback(async () => {
+    if (!canResolve || loading) return;
+    const query = `${city.trim()}, ${country.trim()}`;
 
     setLoading(true);
     setResolveError('');
@@ -75,105 +71,59 @@ export function LocationInput({ onResolved, error }: Props) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [city, country, canResolve, loading, onResolved]);
 
-  const canResolve = !!(city.trim() || zipcode.trim()) && !!country.trim();
-
-  const fieldClass = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white';
+  const fieldStyle = {
+    width: '100%',
+    padding: '6px 10px',
+    border: '1px solid rgba(31,38,34,0.1)',
+    borderRadius: 6,
+    background: '#fbfaf6',
+    fontSize: 12.5,
+    color: '#1f2622',
+    outline: 'none',
+    fontFamily: 'inherit',
+    boxSizing: 'border-box' as const,
+  };
 
   return (
-    <div className="space-y-3">
-      <p className="text-sm font-medium text-gray-700">Project location</p>
-
-      <div className="grid grid-cols-6 gap-3">
-        <div className="col-span-3">
-          <label className="text-xs text-gray-500 mb-1 block">City</label>
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 4 }}>
+        <div>
+          <label style={{ fontSize: 11, color: '#9aada4', display: 'block', marginBottom: 3 }}>City</label>
           <input
             type="text"
             value={city}
             onChange={e => { setCity(e.target.value); setResolved(null); }}
-            placeholder="Boston"
-            className={fieldClass}
+            onKeyDown={e => e.key === 'Enter' && resolve()}
+            placeholder="Dubai"
+            style={fieldStyle}
           />
         </div>
-        <div className="col-span-1">
-          <label className="text-xs text-gray-500 mb-1 block">Zip / Postal code</label>
-          <input
-            type="text"
-            value={zipcode}
-            onChange={e => { setZipcode(e.target.value); setResolved(null); }}
-            placeholder="02101"
-            className={fieldClass}
-          />
-        </div>
-        <div className="col-span-2">
-          <label className="text-xs text-gray-500 mb-1 block">Country</label>
+        <div>
+          <label style={{ fontSize: 11, color: '#9aada4', display: 'block', marginBottom: 3 }}>
+            Country
+            {loading && <span style={{ marginLeft: 6, color: '#c9a961' }}>Resolving…</span>}
+          </label>
           <input
             type="text"
             value={country}
             onChange={e => { setCountry(e.target.value); setResolved(null); }}
-            onKeyDown={e => e.key === 'Enter' && canResolve && handleResolve()}
-            placeholder="United States"
-            className={fieldClass}
+            onBlur={resolve}
+            onKeyDown={e => e.key === 'Enter' && resolve()}
+            placeholder="UAE"
+            style={fieldStyle}
           />
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={handleResolve}
-        disabled={loading || !canResolve}
-        className="px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-medium disabled:opacity-40 hover:bg-emerald-600 transition-colors"
-      >
-        {loading ? 'Resolving…' : 'Resolve location'}
-      </button>
-
       {(error || resolveError) && (
-        <p className="text-sm text-red-600">{error ?? resolveError}</p>
+        <p style={{ fontSize: 11, color: '#dc2626', marginTop: 4 }}>{error ?? resolveError}</p>
       )}
 
       {resolved && (
-        <div className="rounded-lg border border-sky-200 bg-sky-50 p-4 space-y-3">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="text-sm font-semibold text-sky-900">
-                {resolved.location.formattedAddress ?? resolved.location.city ?? resolved.location.country}
-              </p>
-              <p className="text-xs text-sky-700 mt-0.5">
-                {resolved.location.latitude.toFixed(4)}, {resolved.location.longitude.toFixed(4)}
-                {' · '}source: {resolved.location.source}
-              </p>
-            </div>
-            <DataQualityBadge confidence={resolved.location.confidence} />
-          </div>
-
-          <hr className="border-sky-200" />
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <p className="text-xs font-semibold text-sky-800 mb-0.5">Climate zone</p>
-              <p className="text-sm font-medium text-sky-900">
-                {resolved.climate.climateZone}
-                <span className="font-normal text-sky-700"> — {resolved.climate.climateLabel}</span>
-              </p>
-              <DataQualityBadge confidence={resolved.climate.confidence} />
-              {resolved.climate.notes && (
-                <p className="text-xs text-sky-600 mt-1">{resolved.climate.notes}</p>
-              )}
-            </div>
-
-            <div>
-              <p className="text-xs font-semibold text-sky-800 mb-0.5">Grid emission factor</p>
-              <p className="text-sm font-medium text-sky-900">
-                {resolved.grid.gridFactorKgCO2ePerKwh.toFixed(3)}
-                <span className="font-normal text-sky-700"> kgCO₂e/kWh</span>
-              </p>
-              <DataQualityBadge confidence={resolved.grid.confidence} />
-              <p className="text-xs text-sky-600 mt-1">{resolved.grid.sourceDetail}</p>
-            </div>
-          </div>
-
-
+        <div style={{ marginTop: 6, padding: '8px 10px', background: '#eef4ee', border: '1px solid #d6e3d6', borderRadius: 7, fontSize: 11.5, color: '#3d4a44' }}>
+          ✓ {resolved.location.formattedAddress ?? `${resolved.location.city}, ${resolved.location.country}`}
         </div>
       )}
     </div>

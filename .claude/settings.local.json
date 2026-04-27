@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(curl -sI \"https://media.nature.com/original/nature-assets/sdata/2018/sdata2018214/extref/sdata2018214-s1.zip\")",
+      "Bash(curl -s \"https://api.figshare.com/v2/articles/21988065\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('title',''\\), d.get\\('doi',''\\)\\)\")",
+      "Bash(curl -s \"https://api.figshare.com/v2/articles?doi=10.6084/m9.figshare.21988065\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s \"https://zenodo.org/api/records?q=koppen+geiger+beck+2023&size=5\")",
+      "Bash(python3 -c \" import sys, json d = json.load\\(sys.stdin\\) hits = d.get\\('hits', {}\\).get\\('hits', []\\) for h in hits: print\\(h.get\\('id'\\), h.get\\('metadata', {}\\).get\\('title', ''\\)[:60]\\) \")",
+      "Bash(curl -s \"https://www.gloh2o.org/koppen/\" -L)",
+      "Bash(curl -s \"https://api.github.com/search/repositories?q=koppen+geiger+beck+user:hylken\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(r['full_name'], r['html_url']\\) for r in d.get\\('items',[]\\)]\")",
+      "Bash(curl -s 'https://ember-climate.org/api/v1/carbon-intensity?zone=US' -H 'Authorization: Bearer 21e2da97-8fa9-f2f1-5657-60d5fb8589b9')",
+      "Bash(curl -s -I \"https://data.ember-climate.org/\")",
+      "Bash(curl -s -I \"https://api.ember-energy.org/v1/\")",
+      "Bash(npx tsc *)",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}
