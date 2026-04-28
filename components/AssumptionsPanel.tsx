@@ -128,7 +128,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function RowWithBadge({ label, confidence }: { label: string; confidence: 'high' | 'medium' | 'low' | 'fallback' }) {
+function RowWithBadge({ label, confidence }: { label: string; confidence: 'high' | 'medium' | 'low' | 'fallback' | 'manual' }) {
   return (
     <div className="flex justify-between items-center py-1.5 border-b border-gray-50 gap-4">
       <span className="text-xs text-gray-500 shrink-0">{label}</span>

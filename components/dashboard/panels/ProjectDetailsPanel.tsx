@@ -6,14 +6,13 @@ import type { ResolvedLocation } from '@/types/location';
 import type { KoppenClimateResult } from '@/types/climate';
 import type { GridEmissionResult } from '@/types/grid';
 import { LocationInput } from '@/components/LocationInput';
-import { INFRA_ALLOWANCE_OPTIONS } from '@/data/infrastructureAssumptions';
 import Icon from '@/components/dashboard/Icon';
 
 type Props = {
   data: Partial<CarbonQuickCheckInput>;
   onChange: (updates: Partial<CarbonQuickCheckInput>) => void;
   errors: Record<string, string>;
-  onLocationResolved: (data: { location: ResolvedLocation; climate: KoppenClimateResult; grid: GridEmissionResult }) => void;
+  onLocationResolved: (data: { location: ResolvedLocation; climate: KoppenClimateResult | null; grid: GridEmissionResult }) => void;
 };
 
 type DefinedOption = { value: string; label: string; desc: string };
@@ -109,8 +108,16 @@ function DefinedSelect({ options, value, onChange, placeholder, error }: {
 }
 
 // ─── Main panel ───────────────────────────────────────────────────────────────
+const SQM_TO_SQFT = 10.76391;
+const SQFT_TO_SQM = 1 / SQM_TO_SQFT;
+
 export default function ProjectDetailsPanel({ data, onChange, errors, onLocationResolved }: Props) {
   const siteAreaUnit = data.siteAreaUnit ?? 'hectares';
+  const [gfaUnit, setGfaUnit] = useState<'m2' | 'sqft'>('m2');
+
+  const gfaDisplayValue = data.totalBuiltAreaM2
+    ? gfaUnit === 'sqft' ? Math.round(data.totalBuiltAreaM2 * SQM_TO_SQFT) : data.totalBuiltAreaM2
+    : '';
 
   let densityDisplay = '—';
   if (data.totalPopulation && data.siteAreaValue && data.siteAreaValue > 0) {
@@ -139,7 +146,7 @@ export default function ProjectDetailsPanel({ data, onChange, errors, onLocation
 
       {/* Population */}
       <div style={fieldRow}>
-        <span style={fieldLabel}>Population</span>
+        <span style={fieldLabel}>Projected Population</span>
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <input
             type="number" min={1}
@@ -178,15 +185,29 @@ export default function ProjectDetailsPanel({ data, onChange, errors, onLocation
       {/* Total built area */}
       <div style={fieldRow}>
         <span style={fieldLabel}>Total Built Area (GFA)</span>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <input
             type="number" min={1}
-            value={data.totalBuiltAreaM2 ?? ''}
-            onChange={e => onChange({ totalBuiltAreaM2: parseFloat(e.target.value) || undefined as unknown as number })}
-            placeholder="1,200,000"
-            style={{ ...fieldInput, flex: 1 }}
+            value={gfaDisplayValue}
+            onChange={e => {
+              const raw = parseFloat(e.target.value) || undefined as unknown as number;
+              const m2 = raw ? (gfaUnit === 'sqft' ? raw * SQFT_TO_SQM : raw) : undefined as unknown as number;
+              onChange({ totalBuiltAreaM2: m2 });
+            }}
+            placeholder={gfaUnit === 'sqft' ? '12,916,000' : '1,200,000'}
+            style={{ ...fieldInput, flex: 1, minWidth: 0 }}
           />
-          <span style={fieldUnit}>m²</span>
+          <select
+            value={gfaUnit}
+            onChange={e => {
+              const next = e.target.value as 'm2' | 'sqft';
+              setGfaUnit(next);
+            }}
+            style={{ ...selectStyle, flexShrink: 0, width: 52, fontSize: 11, padding: '6px 4px', textAlign: 'center' }}
+          >
+            <option value="m2">m²</option>
+            <option value="sqft">ft²</option>
+          </select>
         </div>
       </div>
       {errors.totalBuiltAreaM2 && <p style={{ fontSize: 11, color: '#dc2626', padding: '0 16px 4px' }}>{errors.totalBuiltAreaM2}</p>}
@@ -221,21 +242,6 @@ export default function ProjectDetailsPanel({ data, onChange, errors, onLocation
         />
       </div>
 
-      {/* Infrastructure allowance */}
-      <div style={{ padding: '10px 16px 0' }}>
-        <div style={{ fontSize: 12, color: '#6b7670', marginBottom: 8 }}>Infrastructure Allowance</div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {INFRA_ALLOWANCE_OPTIONS.map(pct => (
-            <button
-              key={pct} type="button"
-              onClick={() => onChange({ infrastructureAllowancePercent: pct })}
-              style={{ flex: 1, padding: '6px 0', fontSize: 12, fontWeight: 600, borderRadius: 6, border: '1px solid', cursor: 'pointer', transition: 'all .15s', background: data.infrastructureAllowancePercent === pct ? '#5a7a5a' : '#fbfaf6', color: data.infrastructureAllowancePercent === pct ? '#fff' : '#3d4a44', borderColor: data.infrastructureAllowancePercent === pct ? '#5a7a5a' : 'rgba(31,38,34,0.12)', fontFamily: 'inherit' }}
-            >
-              {pct}%
-            </button>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

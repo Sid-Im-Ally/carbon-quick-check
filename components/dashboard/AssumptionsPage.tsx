@@ -91,7 +91,7 @@ const EUI_ZONES = [
   { zone: 'BWk', label: 'Cold Desert',                 examples: 'Tehran, Salt Lake City', res_sf: 99, res_mf: 175, office: 100, retail: 166, hotel: 216, edu: 93,  health: 253, ind: 108, inst: 91  },
   { zone: 'BSh', label: 'Hot Semi-Arid',               examples: 'Salalah, Karachi',      res_sf: 93,  res_mf: 117, office: 111, retail: 145, hotel: 148, edu: 69,  health: 198, ind: 72,  inst: 48  },
   { zone: 'BSk', label: 'Cold Semi-Arid',              examples: 'Denver, Madrid',        res_sf: 100, res_mf: 177, office: 115, retail: 156, hotel: 231, edu: 82,  health: 241, ind: 91,  inst: 78  },
-  { zone: 'Cfa', label: 'Humid Subtropical (fallback)',examples: 'New York, Atlanta',     res_sf: 83,  res_mf: 105, office: 96,  retail: 124, hotel: 152, edu: 64,  health: 191, ind: 72,  inst: 61, fallback: true },
+  { zone: 'Cfa', label: 'Humid Subtropical',examples: 'New York, Atlanta',     res_sf: 83,  res_mf: 105, office: 96,  retail: 124, hotel: 152, edu: 64,  health: 191, ind: 72,  inst: 61, fallback: true },
   { zone: 'Cfb', label: 'Oceanic',                     examples: 'London, Seattle',       res_sf: 96,  res_mf: 118, office: 95,  retail: 115, hotel: 188, edu: 68,  health: 201, ind: 74,  inst: 69  },
   { zone: 'Csa', label: 'Hot Mediterranean',           examples: 'Athens, Los Angeles',   res_sf: 85,  res_mf: 111, office: 100, retail: 121, hotel: 155, edu: 63,  health: 160, ind: 68,  inst: 62  },
   { zone: 'Csb', label: 'Warm Mediterranean',          examples: 'Santiago, San Francisco',res_sf: 82, res_mf: 120, office: 92,  retail: 100, hotel: 165, edu: 61,  health: 171, ind: 67,  inst: 60  },
@@ -130,6 +130,13 @@ const GRID_DATA = [
 export default function AssumptionsPage() {
   const [euiOpen, setEuiOpen] = useState(false);
   const [gridOpen, setGridOpen] = useState(false);
+  const [euiUnit, setEuiUnit] = useState<'kwh' | 'kbtu'>('kwh');
+
+  // 1 kWh/m²/yr = 0.316998 kBtu/ft²/yr
+  const KWH_TO_KBTU = 0.316998;
+  function fmtEui(val: number) {
+    return euiUnit === 'kbtu' ? Math.round(val * KWH_TO_KBTU) : val;
+  }
 
   return (
     <div style={{ padding: '24px 32px 40px', overflowY: 'auto', height: '100%', background: C.bg }}>
@@ -248,16 +255,35 @@ export default function AssumptionsPage() {
       <div style={{ marginBottom: 28 }}>
         <SectionHeader
           title="3 · Building Energy Use Intensity (EUI)"
-          subtitle="Default EUI values in kWh/m²/yr by Köppen climate zone and program type. Low = default × 0.80; High = default × 1.25. Confidence: medium (placeholder benchmarks)."
+          subtitle={`Default EUI values in ${euiUnit === 'kwh' ? 'kWh/m²/yr' : 'kBtu/ft²/yr'} by Köppen climate zone and program type. Low = default × 0.80; High = default × 1.25.`}
         />
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           {/* Toggle header */}
           <div
-            onClick={() => setEuiOpen(o => !o)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', cursor: 'pointer', borderBottom: euiOpen ? `1px solid ${C.border}` : 'none' }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: euiOpen ? `1px solid ${C.border}` : 'none' }}
           >
-            <span style={{ fontSize: 12.5, fontWeight: 600, color: C.dark }}>16 Climate Zones × 9 Program Types — {euiOpen ? 'Hide' : 'Show'} Full Table</span>
-            <span style={{ fontSize: 11, color: C.sage, fontWeight: 600 }}>{euiOpen ? '▲ Collapse' : '▼ Expand'}</span>
+            <span
+              onClick={() => setEuiOpen(o => !o)}
+              style={{ fontSize: 12.5, fontWeight: 600, color: C.dark, cursor: 'pointer', flex: 1 }}
+            >
+              16 Climate Zones × 9 Program Types — {euiOpen ? 'Hide' : 'Show'} Full Table
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Unit toggle */}
+              <div style={{ display: 'flex', background: C.strip, borderRadius: 6, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+                {(['kwh', 'kbtu'] as const).map(u => (
+                  <button
+                    key={u}
+                    type="button"
+                    onClick={e => { e.stopPropagation(); setEuiUnit(u); }}
+                    style={{ padding: '4px 10px', fontSize: 10.5, fontWeight: 600, border: 'none', cursor: 'pointer', fontFamily: 'inherit', background: euiUnit === u ? C.sage : 'transparent', color: euiUnit === u ? '#fff' : C.muted, transition: 'all .15s' }}
+                  >
+                    {u === 'kwh' ? 'kWh/m²' : 'kBtu/ft²'}
+                  </button>
+                ))}
+              </div>
+              <span onClick={() => setEuiOpen(o => !o)} style={{ fontSize: 11, color: C.sage, fontWeight: 600, cursor: 'pointer' }}>{euiOpen ? '▲ Collapse' : '▼ Expand'}</span>
+            </div>
           </div>
 
           {euiOpen && (
@@ -283,32 +309,29 @@ export default function AssumptionsPage() {
                   {EUI_ZONES.map((z, i) => (
                     <Tr key={z.zone} highlight={z.fallback || i % 2 === 0}>
                       <Td>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                          <code style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 11, color: C.sage }}>{z.zone}</code>
-                          {z.fallback && <Pill color={C.sage} bg={C.sageLt}>fallback</Pill>}
-                        </span>
+                        <code style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 11, color: C.sage }}>{z.zone}</code>
                       </Td>
                       <Td muted>{z.label}</Td>
                       <Td muted>{z.examples}</Td>
-                      <Td right mono>{z.res_sf}</Td>
-                      <Td right mono>{z.res_mf}</Td>
-                      <Td right mono>{z.office}</Td>
-                      <Td right mono>{z.retail}</Td>
-                      <Td right mono>{z.hotel}</Td>
-                      <Td right mono>{z.edu}</Td>
+                      <Td right mono>{fmtEui(z.res_sf)}</Td>
+                      <Td right mono>{fmtEui(z.res_mf)}</Td>
+                      <Td right mono>{fmtEui(z.office)}</Td>
+                      <Td right mono>{fmtEui(z.retail)}</Td>
+                      <Td right mono>{fmtEui(z.hotel)}</Td>
+                      <Td right mono>{fmtEui(z.edu)}</Td>
                       <Td right mono>
                         <span style={{ color: z.flag === 'health' ? '#dc2626' : 'inherit' }}>
-                          {z.health}{z.flag === 'health' ? ' ⚠' : ''}
+                          {fmtEui(z.health)}{z.flag === 'health' ? ' ⚠' : ''}
                         </span>
                       </Td>
-                      <Td right mono>{z.ind}</Td>
-                      <Td right mono>{z.inst}</Td>
+                      <Td right mono>{fmtEui(z.ind)}</Td>
+                      <Td right mono>{fmtEui(z.inst)}</Td>
                     </Tr>
                   ))}
                 </tbody>
               </table>
               <div style={{ padding: '10px 20px', borderTop: `1px solid ${C.border}`, fontSize: 10.5, color: C.faint }}>
-                ⚠ Dfb Healthcare (901 kWh/m²/yr) appears anomalous vs adjacent zones (Dfa: 289, Dfc: 328). Verify before use. · All values are medium-confidence benchmarks.
+                ⚠ Dfb Healthcare ({fmtEui(901)} {euiUnit === 'kwh' ? 'kWh/m²/yr' : 'kBtu/ft²/yr'}) appears anomalous vs adjacent zones (Dfa: {fmtEui(289)}, Dfc: {fmtEui(328)}). Verify before use. · All values are medium-confidence benchmarks.
               </div>
             </div>
           )}
@@ -399,21 +422,21 @@ export default function AssumptionsPage() {
             {
               key: 'auto_oriented', label: 'Auto-Oriented / Suburban', color: '#dc2626', bg: '#fef2f2',
               desc: 'High car dependency, limited transit, minimal active mobility.',
-              trips: 3.4,
+              trips: 3,
               split: [['Car', '90%'], ['Transit', '2%'], ['Walk', '4%'], ['Bike', '1%'], ['Taxi', '2%'], ['Other', '1%']],
               lengths: [['Car', '20 km'], ['Transit', '15 km'], ['Walk', '1.5 km'], ['Bike', '3.0 km'], ['Taxi', '20 km'], ['Other', '8 km']],
             },
             {
               key: 'balanced', label: 'Balanced / Mixed', color: '#1a6b8a', bg: '#e8f4fb',
               desc: 'Mix of car, transit, and active modes. Car still dominant.',
-              trips: 3.0,
+              trips: 3,
               split: [['Car', '65%'], ['Transit', '18%'], ['Walk', '10%'], ['Bike', '3%'], ['Taxi', '3%'], ['Other', '1%']],
               lengths: [['Car', '12 km'], ['Transit', '9 km'], ['Walk', '1.0 km'], ['Bike', '2.5 km'], ['Taxi', '12 km'], ['Other', '5 km']],
             },
             {
               key: 'transit_oriented', label: 'Transit-Oriented', color: C.sageMid, bg: C.sageLt,
               desc: 'Strong transit and active mobility. Car is a minority mode.',
-              trips: 2.8,
+              trips: 3,
               split: [['Car', '35%'], ['Transit', '35%'], ['Walk', '20%'], ['Bike', '5%'], ['Taxi', '4%'], ['Other', '1%']],
               lengths: [['Car', '10 km'], ['Transit', '8 km'], ['Walk', '0.8 km'], ['Bike', '2.0 km'], ['Taxi', '10 km'], ['Other', '4 km']],
             },
@@ -453,7 +476,7 @@ export default function AssumptionsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }}>
             {[
               { mode: 'Car', ef: '0.130', note: 'Petrol/diesel fleet avg' },
-              { mode: 'Public Transit', ef: '0.050', note: 'Blended bus + rail' },
+              { mode: 'Transit', ef: '0.050', note: 'Blended bus + rail' },
               { mode: 'Walking', ef: '0.000', note: 'Zero operational' },
               { mode: 'Bike / Micro', ef: '0.000', note: 'Zero operational' },
               { mode: 'Taxi / Ridehail', ef: '0.190', note: 'Higher intensity car' },
@@ -618,7 +641,7 @@ export default function AssumptionsPage() {
               { unit: 'kgCO₂e/kWh', def: 'Grid emission intensity — energy-to-emissions conversion' },
               { unit: 'gCO₂e/kWh', def: 'Same as above × 1000 — used in some reporting standards' },
               { unit: 'kWh/m²/yr', def: 'Energy Use Intensity (EUI) — building energy benchmark' },
-              { unit: 'MWh/yr', def: 'Annual building energy use (kWh ÷ 1000)' },
+              { unit: 'kWh/yr', def: 'Annual building energy use' },
               { unit: 'ppl/ha', def: 'Population density per hectare — mobility scoring input' },
               { unit: 'kgCO₂e/pass-km', def: 'Passenger transport emission factor per kilometre travelled' },
               { unit: 'm²', def: 'Square metres — gross floor area (GFA) per program type' },
@@ -641,8 +664,8 @@ export default function AssumptionsPage() {
         <Card style={{ background: C.strip, border: `1px solid ${C.borderMd}` }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 32px' }}>
             {[
-              { label: 'Building EUI', status: 'placeholder', note: 'Regional benchmarking averages. Should be replaced with country/project-specific measured data or ASHRAE/ISO standards.' },
-              { label: 'Grid Factors', status: 'placeholder', note: 'Country-level fallbacks only. US: EPA eGRID subregion data used when available. International: replace with Electricity Maps or IEA factors.' },
+              { label: 'Building EUI', status: 'autodetected', note: 'Regional benchmarking averages. Should be replaced with country/project-specific measured data or ASHRAE/ISO standards.' },
+              { label: 'Grid Factors', status: 'autodetected', note: 'Country-level fallbacks only. US: EPA eGRID subregion data used when available. International: replace with Electricity Maps or IEA factors.' },
               { label: 'Mobility Profiles', status: 'proxy', note: 'Calibrated planning-level proxies. Trip rates and lengths based on urban mobility literature, not measured project data.' },
               { label: 'Infrastructure Allowance', status: 'proxy', note: 'Simplified % of building emissions. Should be replaced with project-specific infrastructure energy modeling.' },
               { label: 'Climate Zones', status: 'lookup', note: 'Köppen classification via city lookup table. Unrecognized cities fall back to Cfa (Humid Subtropical) with a warning.' },
@@ -652,8 +675,8 @@ export default function AssumptionsPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
                   <span style={{ fontSize: 12, fontWeight: 600, color: C.dark }}>{r.label}</span>
                   <Pill
-                    color={r.status === 'placeholder' ? '#92400e' : r.status === 'proxy' ? '#1a6b8a' : r.status === 'scope2' ? C.sageMid : C.muted}
-                    bg={r.status === 'placeholder' ? '#fef3c7' : r.status === 'proxy' ? '#e8f4fb' : r.status === 'scope2' ? C.sageLt : C.strip}
+                    color={r.status === 'autodetected' ? '#3a6b3a' : r.status === 'proxy' ? '#1a6b8a' : r.status === 'scope2' ? C.sageMid : C.muted}
+                    bg={r.status === 'autodetected' ? '#eef4ee' : r.status === 'proxy' ? '#e8f4fb' : r.status === 'scope2' ? C.sageLt : C.strip}
                   >
                     {r.status}
                   </Pill>

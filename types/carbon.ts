@@ -63,8 +63,9 @@ export type CarbonQuickCheckInput = {
   projectType: ProjectType;
   programAreas: FrontendProgramArea;
   residentialSplit: ResidentialSplit;
-  mobilityQuestionnaire: import('./mobility').MobilityQuestionnaireInput;
+  selectedMobilityProfile: import('./mobility').MobilityProfileType;
   infrastructureAllowancePercent: number;
+  renewableSharePercent: number;
 };
 
 export type DensityResult = {

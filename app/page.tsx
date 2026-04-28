@@ -55,14 +55,9 @@ const INITIAL_FORM: Partial<CarbonQuickCheckInput> = {
   projectType:       undefined,
   programAreas: { residential: 0, office: 0, retail: 0, hospitality: 0, educational: 0, healthcare: 0, industrial: 0, institutional: 0 },
   residentialSplit:  { singleFamilyPercent: 30, multifamilyPercent: 70 },
-  mobilityQuestionnaire: {
-    parkingProvisionScore:    null as unknown as 0,
-    transitAccessScore:       null as unknown as 0,
-    mobilityCultureScore:     null as unknown as 0,
-    catchmentTypeScore:       null as unknown as 0,
-    expectedArrivalModeScore: null as unknown as 0,
-  },
+  selectedMobilityProfile: undefined as unknown as 'auto_oriented',
   infrastructureAllowancePercent: DEFAULT_INFRA_ALLOWANCE_PERCENT,
+  renewableSharePercent: 0,
 };
 
 // ─── Accordion section ────────────────────────────────────────────────────────
@@ -158,21 +153,26 @@ export default function DashboardPage() {
       const next = { ...prev, ...updates };
       if (updates.programAreas)          next.programAreas          = { ...(prev.programAreas ?? {}),          ...updates.programAreas }          as CarbonQuickCheckInput['programAreas'];
       if (updates.residentialSplit)      next.residentialSplit      = { ...(prev.residentialSplit ?? {}),      ...updates.residentialSplit }      as CarbonQuickCheckInput['residentialSplit'];
-      if (updates.mobilityQuestionnaire) next.mobilityQuestionnaire = { ...(prev.mobilityQuestionnaire ?? {}), ...updates.mobilityQuestionnaire } as CarbonQuickCheckInput['mobilityQuestionnaire'];
+
       return next;
     });
   }, []);
 
-  const handleLocationResolved = useCallback((data: { location: ResolvedLocation; climate: KoppenClimateResult; grid: GridEmissionResult }) => {
+  const handleLocationResolved = useCallback((data: { location: ResolvedLocation; climate: KoppenClimateResult | null; grid: GridEmissionResult }) => {
     setResolvedLocation(data.location);
     setResolvedClimate(data.climate);
     setResolvedGrid(data.grid);
     setFormErrors(prev => { const n = { ...prev }; delete n.locationInput; return n; });
   }, []);
 
+  const handleClimateUpdate = useCallback((climate: KoppenClimateResult) => {
+    setResolvedClimate(climate);
+  }, []);
+
   const handleRunQuickCheck = useCallback(() => {
     const errors: Record<string, string> = {};
     if (!resolvedLocation) errors.locationInput = 'Please resolve a project location first.';
+    if (resolvedLocation && !resolvedClimate) errors.locationInput = 'Köppen climate zone required — enter it manually in Grid & Energy.';
     if (!formData.totalPopulation  || formData.totalPopulation  <= 0) errors.totalPopulation  = 'Required';
     if (!formData.totalBuiltAreaM2 || formData.totalBuiltAreaM2 <= 0) errors.totalBuiltAreaM2 = 'Required';
     if (!formData.siteAreaValue    || formData.siteAreaValue    <= 0) errors.siteAreaValue    = 'Required';
@@ -182,9 +182,8 @@ export default function DashboardPage() {
     const totalProgram = Object.values(formData.programAreas ?? {}).reduce((s, v) => s + (v || 0), 0);
     if (totalProgram <= 0) errors.programAreas = 'Assign at least one program area.';
 
-    const mq = formData.mobilityQuestionnaire;
-    if (!mq || mq.parkingProvisionScore == null || mq.transitAccessScore == null || mq.mobilityCultureScore == null || mq.catchmentTypeScore == null || mq.expectedArrivalModeScore == null) {
-      errors.mobilityQuestionnaire = 'Answer all 5 mobility questions.';
+    if (!formData.selectedMobilityProfile) {
+      errors.selectedMobilityProfile = 'Select a mobility profile.';
     }
 
     if (Object.keys(errors).length > 0) {
@@ -193,7 +192,7 @@ export default function DashboardPage() {
         setOpenSections(prev => new Set([...prev, 'project']));
       }
       if (errors.programAreas) setOpenSections(prev => new Set([...prev, 'building']));
-      if (errors.mobilityQuestionnaire) setOpenSections(prev => new Set([...prev, 'mobility']));
+      if (errors.selectedMobilityProfile) setOpenSections(prev => new Set([...prev, 'mobility']));
       return;
     }
 
@@ -242,7 +241,7 @@ export default function DashboardPage() {
   // Accordion completeness
   const projectComplete  = !!(resolvedLocation && formData.totalPopulation && formData.totalBuiltAreaM2 && formData.siteAreaValue && formData.geographicContext && formData.projectType);
   const buildingComplete = Object.values(formData.programAreas ?? {}).some(v => v > 0);
-  const mobilityComplete = !!(formData.mobilityQuestionnaire?.parkingProvisionScore != null && formData.mobilityQuestionnaire?.transitAccessScore != null && formData.mobilityQuestionnaire?.mobilityCultureScore != null && formData.mobilityQuestionnaire?.catchmentTypeScore != null && formData.mobilityQuestionnaire?.expectedArrivalModeScore != null);
+  const mobilityComplete = !!formData.selectedMobilityProfile;
   const gridComplete     = !!resolvedGrid;
 
   const completeMap: Record<AccordionKey, boolean> = { project: projectComplete, building: buildingComplete, mobility: mobilityComplete, grid: gridComplete };
@@ -293,7 +292,7 @@ export default function DashboardPage() {
                 {pKey === 'project'  && <ProjectDetailsPanel  data={formData} onChange={updateForm} errors={formErrors} onLocationResolved={handleLocationResolved} />}
                 {pKey === 'building' && <BuildingProgramPanel  data={formData} onChange={updateForm} errors={formErrors} />}
                 {pKey === 'mobility' && <MobilityContextPanel  data={formData} onChange={updateForm} errors={formErrors} />}
-                {pKey === 'grid'     && <GridEnergyPanel       resolvedGrid={resolvedGrid} resolvedClimate={resolvedClimate} />}
+                {pKey === 'grid'     && <GridEnergyPanel       resolvedGrid={resolvedGrid} resolvedClimate={resolvedClimate} locationResolved={!!resolvedLocation} data={formData} onChange={updateForm} onClimateUpdate={handleClimateUpdate} />}
               </AccordionSection>
             ))}
 
@@ -338,7 +337,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Assumption strip */}
-                <AssumptionStrip result={result} />
+                <AssumptionStrip result={result} onViewAssumptions={() => setActiveNavTab('assumptions')} />
               </>
             ) : (
               <EmptyState loading={loading} error={calcError} />

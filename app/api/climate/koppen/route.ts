@@ -15,8 +15,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'latitude and longitude are required numbers' }, { status: 400 });
     }
 
-    const result = await getKoppenClimateZone(latitude, longitude, location);
-    return NextResponse.json(result);
+    const result = await getKoppenClimateZone(latitude, longitude);
+    if (!result) return NextResponse.json({ found: false }, { status: 200 });
+    return NextResponse.json({ found: true, ...result });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to determine climate zone';
     return NextResponse.json({ error: message }, { status: 500 });

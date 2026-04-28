@@ -6,6 +6,10 @@ export function hectaresToM2(ha: number): number {
   return ha * 10000;
 }
 
+export function acresToM2(acres: number): number {
+  return acres * 4046.8564;
+}
+
 export function kgToTonnes(kg: number): number {
   return kg / 1000;
 }

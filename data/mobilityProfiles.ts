@@ -23,7 +23,7 @@ export const MOBILITY_PROFILES: Record<MobilityProfileType, MobilityProfileData>
   auto_oriented: {
     label: 'Auto-Oriented / Suburban',
     description: 'High car dependency, limited transit, minimal active mobility.',
-    tripsPerPersonPerDay: 3.4,
+    tripsPerPersonPerDay: 3,
     modeSplit: {
       car: 0.90,
       transit: 0.02,
@@ -71,7 +71,7 @@ export const MOBILITY_PROFILES: Record<MobilityProfileType, MobilityProfileData>
   transit_oriented: {
     label: 'Transit-Oriented / Strong Public Transit + Active Mobility',
     description: 'Strong transit and active mobility culture. Car is a minority mode.',
-    tripsPerPersonPerDay: 2.8,
+    tripsPerPersonPerDay: 3,
     modeSplit: {
       car: 0.35,
       transit: 0.35,
@@ -94,8 +94,8 @@ export const MOBILITY_PROFILES: Record<MobilityProfileType, MobilityProfileData>
 };
 
 export const TRANSPORT_MODE_LABELS: Record<TransportMode, string> = {
-  car: 'Private Car',
-  transit: 'Public Transit',
+  car: 'Car',
+  transit: 'Transit',
   walk: 'Walking',
   bike_micromobility: 'Cycling / Micromobility',
   taxi_ridehail: 'Taxi / Ridehail',

@@ -94,8 +94,7 @@ export default function ChartArea({ result }: Props) {
       {tab === 'Mobility' && (
         <div style={{ padding: '16px 18px' }}>
           <div style={{ fontSize: 12, color: '#3d4a44', marginBottom: 12, fontWeight: 600 }}>
-            Profile: <span style={{ color: '#1e3128' }}>{result.assignedMobilityProfile.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
-            <span style={{ color: '#9aada4', fontWeight: 400, marginLeft: 12 }}>Score: {result.mobilityScoring.finalScore.toFixed(1)}</span>
+            Profile: <span style={{ color: '#1e3128' }}>{result.assignedMobilityProfile.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
           </div>
           {mobilityByMode.map(d => <BarRow key={d.label} label={d.label} value={d.value} max={maxMob} color="#e8954a" share={d.share} />)}
         </div>
@@ -106,7 +105,7 @@ export default function ChartArea({ result }: Props) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(31,38,34,0.08)' }}>
-                {['Program', 'Area (m²)', 'EUI', 'Energy (MWh)', 'tCO₂e/yr'].map(h => (
+                {['Program', 'Area (m²)', 'EUI', 'Energy (kWh)', 'tCO₂e/yr'].map(h => (
                   <th key={h} style={{ padding: '6px 8px', textAlign: h === 'Program' ? 'left' : 'right', color: '#9aada4', fontWeight: 600, fontSize: 10.5, letterSpacing: 0.5, textTransform: 'uppercase' }}>{h}</th>
                 ))}
               </tr>
@@ -117,7 +116,7 @@ export default function ChartArea({ result }: Props) {
                   <td style={{ padding: '7px 8px', color: '#3d4a44' }}>{PROGRAM_LABELS[r.programType] ?? r.programType}</td>
                   <td style={{ padding: '7px 8px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#1f2622' }}>{fmt(r.areaM2)}</td>
                   <td style={{ padding: '7px 8px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#6b7670' }}>{r.euiKwhPerM2Year.toFixed(0)}</td>
-                  <td style={{ padding: '7px 8px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#1f2622' }}>{fmt(Math.round(r.annualEnergyKwh / 1000))}</td>
+                  <td style={{ padding: '7px 8px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#1f2622' }}>{fmt(Math.round(r.annualEnergyKwh))}</td>
                   <td style={{ padding: '7px 8px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: '#1e3128', fontWeight: 600 }}>{fmt(Math.round(r.emissionsTCO2e))}</td>
                 </tr>
               ))}

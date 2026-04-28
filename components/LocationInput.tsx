@@ -7,7 +7,7 @@ import type { GridEmissionResult } from '@/types/grid';
 
 type ResolvedData = {
   location: ResolvedLocation;
-  climate: KoppenClimateResult;
+  climate: KoppenClimateResult | null;
   grid: GridEmissionResult;
 };
 
@@ -60,7 +60,8 @@ export function LocationInput({ onResolved, error }: Props) {
         }),
       ]);
 
-      const climate: KoppenClimateResult = await climateRes.json();
+      const climateBody = await climateRes.json();
+      const climate: KoppenClimateResult | null = climateBody.found ? climateBody : null;
       const grid: GridEmissionResult = await gridRes.json();
 
       const data: ResolvedData = { location, climate, grid };

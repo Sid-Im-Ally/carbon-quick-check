@@ -1,4 +1,4 @@
-export type DataConfidence = 'high' | 'medium' | 'low' | 'fallback';
+export type DataConfidence = 'high' | 'medium' | 'low' | 'fallback' | 'manual';
 
 export type DataQualityAssessment = {
   confidence: DataConfidence;
@@ -33,12 +33,18 @@ export function assessDataQuality(confidence: DataConfidence): DataQualityAssess
       description: 'No data available for this location. A global fallback was applied.',
       color: 'orange',
     },
+    manual: {
+      confidence: 'manual',
+      label: 'Manual entry',
+      description: 'Köppen zone entered manually by the user.',
+      color: 'amber',
+    },
   };
   return map[confidence];
 }
 
 export function worstConfidence(levels: DataConfidence[]): DataConfidence {
-  const order: DataConfidence[] = ['high', 'medium', 'low', 'fallback'];
+  const order: DataConfidence[] = ['high', 'medium', 'low', 'fallback', 'manual'];
   let worst: DataConfidence = 'high';
   for (const level of levels) {
     if (order.indexOf(level) > order.indexOf(worst)) {

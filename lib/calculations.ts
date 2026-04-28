@@ -10,8 +10,9 @@ import type { KoppenClimateResult } from '@/types/climate';
 import type { GridEmissionResult } from '@/types/grid';
 import { getEuiAssumptionWithFallback } from '@/data/buildingEuiAssumptions';
 import { MOBILITY_PROFILES } from '@/data/mobilityProfiles';
-import { calculateDensity, calculateMobilityScore } from './mobilityScoring';
-import { m2ToHectares } from './unitConversions';
+import { INFRA_FACTOR_BY_PROJECT_TYPE } from '@/data/infrastructureAssumptions';
+import { calculateDensity } from './mobilityScoring';
+import { acresToM2 } from './unitConversions';
 
 const TRANSPORT_MODES = ['car', 'transit', 'walk', 'bike_micromobility', 'taxi_ridehail', 'other'] as const;
 
@@ -34,11 +35,12 @@ export function runCalculations(
   // Grid factor (use directly — already validated by gridEmissionService)
   const gridFactorKgCO2ePerKwh = grid.gridFactorKgCO2ePerKwh;
 
-  // --- Site area ---
-  const siteAreaHectares =
-    input.siteAreaUnit === 'hectares' ? input.siteAreaValue : m2ToHectares(input.siteAreaValue);
+  // --- Site area: convert to m² then derive ha ---
+  // Formula 1-2: Area_m2, SiteArea_ha = SiteArea_m2 / 10,000
   const siteAreaM2 =
-    input.siteAreaUnit === 'hectares' ? input.siteAreaValue * 10000 : input.siteAreaValue;
+    input.siteAreaUnit === 'hectares' ? input.siteAreaValue * 10000
+    : input.siteAreaUnit === 'acres'  ? acresToM2(input.siteAreaValue)
+    : input.siteAreaValue;
 
   // --- Density ---
   const density = calculateDensity(input.totalPopulation, siteAreaM2);
@@ -90,7 +92,17 @@ export function runCalculations(
     };
   });
 
-  const buildingEmissionsTCO2e = buildingResults.reduce((sum, r) => sum + r.emissionsTCO2e, 0);
+  // Formula 9: RawBuildingEmissions = Σ(Area × EUI × GridFactor)  [already in tCO₂e via /1000]
+  const rawBuildingEmissionsTCO2e = buildingResults.reduce((sum, r) => sum + r.emissionsTCO2e, 0);
+
+  // Formula 10: AdjustedBuildingEmissions = Raw × (1 - RenewableShare)
+  const renewableShareDecimal = (input.renewableSharePercent ?? 0) / 100;
+  const buildingEmissionsTCO2e = rawBuildingEmissionsTCO2e * (1 - renewableShareDecimal);
+  if (renewableShareDecimal > 0) {
+    assumptionsNotes.push(
+      `Renewable share ${input.renewableSharePercent}% applied — building emissions reduced from ${rawBuildingEmissionsTCO2e.toFixed(0)} to ${buildingEmissionsTCO2e.toFixed(0)} tCO₂e/year.`,
+    );
+  }
 
   // --- Program area validation ---
   const totalProgramAreaM2 =
@@ -108,15 +120,21 @@ export function runCalculations(
     programAreaStatus = 'over';
   }
 
-  // --- Mobility scoring ---
-  const mobilityScoring = calculateMobilityScore(
-    input.mobilityQuestionnaire,
-    density,
-    input.geographicContext,
-    input.projectType,
-  );
+  // --- Mobility profile (directly selected by user) ---
+  const mobilityScoring = {
+    parkingWeightedScore: 0,
+    transitWeightedScore: 0,
+    mobilityCultureScore: 0,
+    catchmentScore: 0,
+    arrivalModeScore: 0,
+    densityModifier: 0,
+    geographicContextModifier: 0,
+    projectTypeModifier: 0,
+    finalScore: 0,
+    assignedProfile: input.selectedMobilityProfile,
+  };
 
-  const profile = MOBILITY_PROFILES[mobilityScoring.assignedProfile];
+  const profile = MOBILITY_PROFILES[input.selectedMobilityProfile];
   const annualTripsTotal = input.totalPopulation * profile.tripsPerPersonPerDay * 365;
 
   const mobilityResults: MobilityModeResult[] = TRANSPORT_MODES.map(mode => {
@@ -133,7 +151,11 @@ export function runCalculations(
   const mobilityEmissionsTCO2e = mobilityResults.reduce((sum, r) => sum + r.emissionsTCO2e, 0);
 
   // --- Infrastructure ---
-  const infrastructureEmissionsTCO2e = (buildingEmissionsTCO2e * input.infrastructureAllowancePercent) / 100;
+  // Formula 13: factor auto-derived from project type
+  // Formula 14: InfraEmissions = (AdjustedBuilding + Mobility) × factor
+  const infrastructureFactor = INFRA_FACTOR_BY_PROJECT_TYPE[input.projectType];
+  const infrastructureEmissionsTCO2e =
+    (buildingEmissionsTCO2e + mobilityEmissionsTCO2e) * infrastructureFactor;
 
   // --- Totals ---
   const totalEmissionsTCO2e = buildingEmissionsTCO2e + mobilityEmissionsTCO2e + infrastructureEmissionsTCO2e;

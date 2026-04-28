@@ -3,9 +3,9 @@ import Icon, { type IconName } from '../Icon';
 
 type StripItem = { icon: IconName; iconColor: string; label: string; value: string; sub?: string };
 
-type Props = { result: CalculationResult };
+type Props = { result: CalculationResult; onViewAssumptions: () => void };
 
-export default function AssumptionStrip({ result }: Props) {
+export default function AssumptionStrip({ result, onViewAssumptions }: Props) {
   const items: StripItem[] = [
     {
       icon: 'globe', iconColor: '#6b7670',
@@ -49,9 +49,13 @@ export default function AssumptionStrip({ result }: Props) {
           </div>
         </div>
       ))}
-      <div style={{ marginLeft: 'auto', fontSize: 12, color: '#5a7a5a', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+      <button
+        type="button"
+        onClick={onViewAssumptions}
+        style={{ marginLeft: 'auto', fontSize: 12, color: '#5a7a5a', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', fontFamily: 'inherit', padding: 0 }}
+      >
         View all assumptions <Icon name="chevron-right" size={12} color="#5a7a5a" />
-      </div>
+      </button>
     </div>
   );
 }

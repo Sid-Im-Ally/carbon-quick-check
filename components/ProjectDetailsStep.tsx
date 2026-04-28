@@ -14,7 +14,7 @@ import { m2ToHectares } from '@/lib/unitConversions';
 
 type ResolvedData = {
   location: ResolvedLocation;
-  climate: KoppenClimateResult;
+  climate: KoppenClimateResult | null;
   grid: GridEmissionResult;
 };
 

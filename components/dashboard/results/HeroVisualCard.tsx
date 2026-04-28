@@ -5,7 +5,7 @@ import type { CalculationResult } from '@/types/carbon';
 import type { ResolvedLocation } from '@/types/location';
 import Icon from '../Icon';
 
-const BASELINE = 5.9;
+const BASELINE = 9.5;
 const FALLBACK_PHOTO = 'https://images.unsplash.com/photo-1518391846015-55a9cc003b25?w=900&q=80';
 
 type Props = {
