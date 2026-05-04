@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { CalculationResult } from '@/types/carbon';
 import type { ResolvedLocation } from '@/types/location';
-import Icon from '../Icon';
 
-const BASELINE = 9.5;
 const FALLBACK_PHOTO = 'https://images.unsplash.com/photo-1518391846015-55a9cc003b25?w=900&q=80';
 
 type Props = {
@@ -72,21 +70,7 @@ export default function HeroCard({ result, location, projectName }: Props) {
           )}
         </div>
 
-        {result ? (() => {
-          const diff = ((result.ghgPerCapitaTCO2e - BASELINE) / BASELINE) * 100;
-          const isLower = diff < 0;
-          return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: isLower ? '#eef4ee' : '#fdf3ea', border: `1px solid ${isLower ? '#d6e3d6' : '#f4d9b9'}`, borderRadius: 8, fontSize: 12, color: '#3d4a44' }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: isLower ? '#5a7a5a' : '#e8954a', display: 'grid', placeItems: 'center', color: '#fff', flexShrink: 0 }}>
-                <Icon name={isLower ? 'arrow-down' : 'arrow-up'} size={14} stroke={2} />
-              </div>
-              <div>
-                <div style={{ fontWeight: 700, color: '#1e3128' }}>{isLower ? '−' : '+'}{Math.abs(diff).toFixed(0)}% vs. baseline</div>
-                <div style={{ fontSize: 11, color: '#6b7670' }}>{BASELINE} tCO₂e / person / year</div>
-              </div>
-            </div>
-          );
-        })() : (
+        {!result && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#f6f3ec', border: '1px solid rgba(31,38,34,0.08)', borderRadius: 8, fontSize: 12, color: '#9aada4' }}>
             Fill in project details and click Run Quick Check
           </div>

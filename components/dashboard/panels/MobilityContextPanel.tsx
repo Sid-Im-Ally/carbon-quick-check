@@ -33,6 +33,10 @@ export default function MobilityContextPanel({ data, onChange, errors }: Props) 
 
   return (
     <div style={{ padding: '10px 12px 14px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <p style={{ fontSize: 11, color: '#9aada4', margin: '0 4px 2px', lineHeight: 1.5 }}>
+        Pick the profile that best matches your project.
+      </p>
+
       {PROFILES.map(({ key, color, bg, accentBorder }) => {
         const profile = MOBILITY_PROFILES[key];
         const isSelected = selected === key;
