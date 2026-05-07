@@ -492,121 +492,10 @@ export default function AssumptionsPage() {
         </Card>
       </div>
 
-      {/* ── 6. Mobility Scoring System ───────────────────────────────────── */}
+      {/* ── 6. Infrastructure Allowance ──────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>
         <SectionHeader
-          title="6 · Mobility Scoring System"
-          subtitle="A weighted composite score (0–20+) determines which mobility profile is assigned. Higher score = better transit/active conditions."
-        />
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 12 }}>
-          <Card>
-            <div style={{ fontSize: 11.5, fontWeight: 600, color: C.dark, marginBottom: 12 }}>Scoring Formula</div>
-            <FormulaBox>
-              Score = (2 × Parking)<br />
-              {'      '}+ (2 × Transit)<br />
-              {'      '}+ Mobility Culture<br />
-              {'      '}+ Catchment Type<br />
-              {'      '}+ Expected Arrival Mode<br />
-              {'      '}+ Density Modifier<br />
-              {'      '}+ Geo Context Modifier<br />
-              {'      '}+ Project Type Modifier<br /><br />
-              Final = max(0, Score)
-            </FormulaBox>
-            <div style={{ marginTop: 14 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.faint, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 8 }}>Profile Thresholds</div>
-              {[
-                { range: 'Score ≤ 7', profile: 'Auto-Oriented', color: '#dc2626', bg: '#fef2f2' },
-                { range: '7 < Score < 15', profile: 'Balanced', color: '#1a6b8a', bg: '#e8f4fb' },
-                { range: 'Score ≥ 15', profile: 'Transit-Oriented', color: C.sageMid, bg: C.sageLt },
-              ].map(r => (
-                <div key={r.profile} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', marginBottom: 4, borderRadius: 6, background: r.bg }}>
-                  <code style={{ fontFamily: 'monospace', fontSize: 11.5, color: C.dark }}>{r.range}</code>
-                  <Pill color={r.color} bg="rgba(255,255,255,0.7)">{r.profile}</Pill>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <Card>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.faint, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 10 }}>Question Weights</div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11.5 }}>
-                <tbody>
-                  {[
-                    ['Parking Provision', '× 2', 'High-impact: supply drives mode choice'],
-                    ['Transit Access', '× 2', 'High-impact: proximity to service'],
-                    ['Mobility Culture', '× 1', 'Existing local behaviour'],
-                    ['Catchment Type', '× 1', 'Local vs. regional draw'],
-                    ['Expected Arrival', '× 1', 'Design intent'],
-                  ].map(([q, w, note]) => (
-                    <tr key={q} style={{ borderBottom: `1px solid rgba(31,38,34,0.05)` }}>
-                      <td style={{ padding: '5px 0', fontSize: 11.5, color: C.dark }}>{q}</td>
-                      <td style={{ padding: '5px 6px', textAlign: 'center' }}>
-                        <code style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 11, color: C.sage, background: C.sageLt, padding: '1px 5px', borderRadius: 3 }}>{w}</code>
-                      </td>
-                      <td style={{ padding: '5px 0', fontSize: 10.5, color: C.faint, paddingLeft: 6 }}>{note}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-
-            <Card>
-              <div style={{ fontSize: 11, fontWeight: 700, color: C.faint, letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 10 }}>Context Modifiers</div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11.5 }}>
-                <tbody>
-                  <tr style={{ borderBottom: `1px solid rgba(31,38,34,0.06)` }}>
-                    <td colSpan={2} style={{ padding: '4px 0 2px', fontSize: 10, fontWeight: 700, color: C.faint, letterSpacing: 0.5, textTransform: 'uppercase' }}>Density</td>
-                  </tr>
-                  {[
-                    ['< 50 ppl/ha', '–1', 'Low'],
-                    ['50–150 ppl/ha', '0', 'Medium'],
-                    ['> 150 ppl/ha', '+1', 'High'],
-                  ].map(([r, m, l]) => (
-                    <tr key={l} style={{ borderBottom: `1px solid rgba(31,38,34,0.04)` }}>
-                      <td style={{ padding: '4px 0', fontSize: 11, color: C.dark }}>{r}</td>
-                      <td style={{ padding: '4px 0', textAlign: 'right', fontSize: 11, fontWeight: 700, color: m.startsWith('+') ? C.sage : m.startsWith('–') ? C.orange : C.muted }}>{m}</td>
-                    </tr>
-                  ))}
-                  <tr style={{ borderBottom: `1px solid rgba(31,38,34,0.06)` }}>
-                    <td colSpan={2} style={{ padding: '8px 0 2px', fontSize: 10, fontWeight: 700, color: C.faint, letterSpacing: 0.5, textTransform: 'uppercase' }}>Geographic Context</td>
-                  </tr>
-                  {[
-                    ['Urban Core', '+1'],
-                    ['Urban / Inner Ring', '+0.5'],
-                    ['Peri-Urban / Fringe', '–0.5'],
-                    ['Suburban Edge', '–1'],
-                    ['Greenfield', '–1'],
-                  ].map(([l, m]) => (
-                    <tr key={l} style={{ borderBottom: `1px solid rgba(31,38,34,0.04)` }}>
-                      <td style={{ padding: '4px 0', fontSize: 11, color: C.dark }}>{l}</td>
-                      <td style={{ padding: '4px 0', textAlign: 'right', fontSize: 11, fontWeight: 700, color: m.startsWith('+') ? C.sage : C.orange }}>{m}</td>
-                    </tr>
-                  ))}
-                  <tr style={{ borderBottom: `1px solid rgba(31,38,34,0.06)` }}>
-                    <td colSpan={2} style={{ padding: '8px 0 2px', fontSize: 10, fontWeight: 700, color: C.faint, letterSpacing: 0.5, textTransform: 'uppercase' }}>Project Type</td>
-                  </tr>
-                  {[
-                    ['Infill / Redevelopment', '+1'],
-                    ['Campus / Planned District', '0'],
-                    ['Greenfield Development', '–1'],
-                  ].map(([l, m]) => (
-                    <tr key={l} style={{ borderBottom: `1px solid rgba(31,38,34,0.04)` }}>
-                      <td style={{ padding: '4px 0', fontSize: 11, color: C.dark }}>{l}</td>
-                      <td style={{ padding: '4px 0', textAlign: 'right', fontSize: 11, fontWeight: 700, color: m === '0' ? C.muted : m.startsWith('+') ? C.sage : C.orange }}>{m}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Card>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 7. Infrastructure Allowance ──────────────────────────────────── */}
-      <div style={{ marginBottom: 28 }}>
-        <SectionHeader
-          title="7 · Infrastructure Allowance"
+          title="6 · Infrastructure Allowance"
           subtitle="A simple percentage uplift on building emissions representing shared operational loads: street lighting, pumping stations, common systems, public realm. This is not embodied carbon."
         />
         <Card>
@@ -630,9 +519,9 @@ export default function AssumptionsPage() {
         </Card>
       </div>
 
-      {/* ── 8. Units & Metrics Reference ────────────────────────────────── */}
+      {/* ── 7. Units & Metrics Reference ────────────────────────────────── */}
       <div style={{ marginBottom: 28 }}>
-        <SectionHeader title="8 · Units & Metrics Reference" />
+        <SectionHeader title="7 · Units & Metrics Reference" />
         <Card>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 32px' }}>
             {[
@@ -658,9 +547,9 @@ export default function AssumptionsPage() {
         </Card>
       </div>
 
-      {/* ── 9. Data Sources & Limitations ───────────────────────────────── */}
+      {/* ── 8. Data Sources & Limitations ───────────────────────────────── */}
       <div style={{ marginBottom: 8 }}>
-        <SectionHeader title="9 · Data Sources & Limitations" />
+        <SectionHeader title="8 · Data Sources & Limitations" />
         <Card style={{ background: C.strip, border: `1px solid ${C.borderMd}` }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 32px' }}>
             {[
